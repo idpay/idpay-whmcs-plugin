@@ -16,9 +16,7 @@ require_once __DIR__ . '/../../../includes/invoicefunctions.php';
 
 if (!defined("WHMCS")) die();
 
-$gatewayModuleName = basename(__FILE__, '.php');
-
-$gatewayParams = getGatewayVariables($gatewayModuleName);
+$gatewayParams = getGatewayVariables('idpay');
 
 if (!$gatewayParams['type']) die('Module Not Activated');
 
