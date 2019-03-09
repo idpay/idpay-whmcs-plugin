@@ -58,6 +58,12 @@ function idpay_link($params)
         $amount *= 10;
     }
 
+    // Customer information
+    $client = $params['clientdetails'];
+    $name = $client['firstname'] . ' ' .  $client['lastname'];
+    $mail = $client['email'];
+    $phone = $client['phonenumber'];
+
     $desc = $params["description"];
     $callback = $systemurl . 'modules/gateways/callback/' . $moduleName . '.php';
 
@@ -68,12 +74,14 @@ function idpay_link($params)
     $data = array(
         'order_id' => $params['invoiceid'],
         'amount' => $amount,
-        'phone' => $params['clientdetails']['phonenumber'],
+        'name' => $name,
+        'phone' => $phone,
+        'mail' => $mail,
         'desc' => $desc,
         'callback' => $callback,
     );
 
-    $ch = curl_init('https://api.idpay.ir/v1/payment');
+    $ch = curl_init('https://api.idpay.ir/v1.1/payment');
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
     curl_setopt($ch, CURLOPT_HTTPHEADER, array(
