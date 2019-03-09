@@ -50,65 +50,83 @@ $orderid = checkCbInvoiceID($orderid, $gatewayParams['name']);
 $pid = $_POST['id'];
 $porder_id = $_POST['order_id'];
 
-if (!empty($pid) && !empty($porder_id) && $porder_id == $orderid) {
-    $api_key = $gatewayParams['api_key'];
-    $sandbox = $gatewayParams['sandbox'] == 'on' ? 'true' : 'false';
+if (!empty($pid) && !empty($porder_id) && $porder_id == $orderid)
+{
+    if ($_POST['status'] == 10)
+    {
+        $api_key = $gatewayParams['api_key'];
+        $sandbox = $gatewayParams['sandbox'] == 'on' ? 'true' : 'false';
 
-    $data = array(
-        'id' => $pid,
-        'order_id' => $orderid,
-    );
+        $data = array(
+            'id'       => $pid,
+            'order_id' => $orderid,
+        );
 
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, 'https://api.idpay.ir/v1/payment/inquiry');
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-        'Content-Type: application/json',
-        'X-API-KEY:' . $api_key,
-        'X-SANDBOX:' . $sandbox,
-    ));
+        $ch = curl_init();
+        curl_setopt( $ch, CURLOPT_URL, 'https://api.idpay.ir/v1.1/payment/verify' );
+        curl_setopt( $ch, CURLOPT_POSTFIELDS, json_encode( $data ) );
+        curl_setopt( $ch, CURLOPT_RETURNTRANSFER, TRUE );
+        curl_setopt( $ch, CURLOPT_HTTPHEADER, array(
+            'Content-Type: application/json',
+            'X-API-KEY:' . $api_key,
+            'X-SANDBOX:' . $sandbox,
+        ) );
 
-    $result = curl_exec($ch);
-    $result = json_decode($result);
-    $http_status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
+        $result      = curl_exec( $ch );
+        $result      = json_decode( $result );
+        $http_status = curl_getinfo( $ch, CURLINFO_HTTP_CODE );
+        curl_close( $ch );
 
-    if ($http_status != 200) {
-        logTransaction($gatewayParams['name'],
-            [
-                "GET" => $_GET,
-                "POST" => $_POST,
-                "result" => sprintf('خطا هنگام بررسی وضعیت تراکنش. وضعیت خطا: %s - کد خطا: %s - پیام خطا: %s', $http_status, $result->error_code, $result->error_message)
-            ], 'Failure');
-        idpay_end();
-    }
-
-    $inquiry_status = empty($result->status) ? NULL : $result->status;
-    $inquiry_track_id = empty($result->track_id) ? NULL : $result->track_id;
-    $inquiry_amount = empty($result->amount) ? NULL : $result->amount;
-
-    checkCbTransID($inquiry_track_id);
-
-    if (empty($inquiry_status) || empty($inquiry_track_id) || empty($inquiry_amount) || $inquiry_amount != $amount || $inquiry_status != 100) {
-        logTransaction($gatewayParams['name'],
-            [
-                "GET" => $_GET,
-                "POST" => $_POST,
-                "result" => idpay_get_failed_message($gatewayParams['failed_massage'], $inquiry_track_id, $orderid)
-            ], 'Failure');
-    } else {
-        $paymentSuccess = true;
-        if (!empty($gatewayParams['Currencies']) && $gatewayParams['Currencies'] == 'Toman') {
-          $amount = $amount / 10;
+        if ( $http_status != 200 )
+        {
+            logTransaction( $gatewayParams['name'],
+                [
+                    "GET"    => $_GET,
+                    "POST"   => $_POST,
+                    "result" => sprintf( 'خطا هنگام بررسی وضعیت تراکنش. وضعیت خطا: %s - کد خطا: %s - پیام خطا: %s', $http_status, $result->error_code, $result->error_message )
+                ], 'Failure' );
         }
-        addInvoicePayment($orderid, $inquiry_track_id, $amount, 0, $gatewaymodule);
+        else {
+            $verify_status   = empty( $result->status ) ? NULL : $result->status;
+            $verify_track_id = empty( $result->track_id ) ? NULL : $result->track_id;
+            $verify_amount   = empty( $result->amount ) ? NULL : $result->amount;
+
+            checkCbTransID( $verify_track_id );
+
+            if ( empty( $verify_status ) || empty( $verify_track_id ) || empty( $verify_amount ) || $verify_amount != $amount || $verify_status < 100 )
+            {
+                logTransaction( $gatewayParams['name'],
+                    [
+                        "GET"    => $_GET,
+                        "POST"   => $_POST,
+                        "result" => idpay_get_failed_message( $gatewayParams['failed_massage'], $verify_track_id, $orderid )
+                    ], 'Failure' );
+            }
+            else
+            {
+                $paymentSuccess = TRUE;
+                if ( ! empty( $gatewayParams['Currencies'] ) && $gatewayParams['Currencies'] == 'Toman' )
+                {
+                    $amount = $amount / 10;
+                }
+                addInvoicePayment( $orderid, $verify_track_id, $amount, 0, $gatewaymodule );
+                logTransaction( $gatewayParams['name'],
+                    [
+                        "GET"    => $_GET,
+                        "POST"   => $_POST,
+                        "result" => idpay_get_success_message( $gatewayParams['success_massage'], $verify_track_id, $orderid )
+                    ], 'Success' );
+            }
+        }
+
+    }
+    else {
         logTransaction($gatewayParams['name'],
             [
                 "GET" => $_GET,
                 "POST" => $_POST,
-                "result" => idpay_get_success_message($gatewayParams['success_massage'], $inquiry_track_id, $orderid)
-            ], 'Success');
+                "result" => idpay_get_failed_message( $gatewayParams['failed_massage'], $_POST['track_id'], $_POST['order_id'] )
+            ], 'Failure');
     }
 } else {
     logTransaction($gatewayParams['name'],
