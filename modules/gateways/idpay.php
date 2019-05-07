@@ -66,8 +66,8 @@ function idpay_link($params)
 
     $desc = $params["description"];
 
-    // Remove any trailing slashes and then add new one
-    // WHMCS version 7 contains a trailing slash but  version 7
+    // Remove any trailing slashes and then add a new one.
+    // WHMCS version 7 contains a trailing slash but version 6
     // does not contain any one. We remove and then add a new trailing slash for
     // the compatibility of the two versions.
     $systemurl = rtrim($systemurl, '/') . '/';
