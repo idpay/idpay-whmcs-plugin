@@ -65,6 +65,13 @@ function idpay_link($params)
     $phone = $client['phonenumber'];
 
     $desc = $params["description"];
+
+    // Remove any trailing slashes and then add new one
+    // WHMCS version 7 contains a trailing slash but  version 7
+    // does not contain any one. We remove and then add a new trailing slash for
+    // the compatibility of the two versions.
+    $systemurl = rtrim($systemurl, '/') . '/';
+
     $callback = $systemurl . 'modules/gateways/callback/' . $moduleName . '.php';
 
     if (empty($amount)) {
