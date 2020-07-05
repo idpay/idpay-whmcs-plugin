@@ -103,8 +103,13 @@ function idpay_link($params)
     curl_close($ch);
 
     if ($http_status != 201 || empty($result) || empty($result->id) || empty($result->link)) {
-        return sprintf('خطا هنگام ایجاد تراکنش. وضعیت خطا: %s - کد خطا: %s - پیام خطا: %s', $http_status, $result->error_code, $result->error_message);
+        return sprintf('<span style="unicode-bidi: plaintext;">خطا هنگام ایجاد تراکنش. وضعیت خطا: %s - کد خطا: %s - پیام خطا: %s</span>', $http_status, $result->error_code, $result->error_message);
     } else {
-        return '<form method="get" action="' . $result->link . '"><input type="submit" name="pay" value="پرداخت" /></form>';
+        $logo_link = $systemurl . 'modules/gateways/idpay/logo.svg';
+        $output = '<form method="get" action="' . $result->link . '">
+            <button type="submit" name="pay" value="پرداخت" style="direction: rtl;"><img src="' . $logo_link . '" width="70px">پرداخت امن با آیدی پی</button>
+            <p style="margin-top: 10px;">پرداخت امن به وسیله کلیه کارتهای عضو شتاب با درگاه پرداخت آیدی پی</p>
+        </form>';
+        return $output;
     }
 }

@@ -30,6 +30,47 @@ function idpay_get_success_message($success_massage, $track_id, $order_id)
     return str_replace(["{track_id}", "{order_id}"], [$track_id, $order_id], $success_massage);
 }
 
+function idpay_get_response_message($massage_id)
+{
+    switch($massage_id){
+        case 1:
+            return 'پرداخت انجام نشده است';
+        break;
+        case 2:
+            return 'پرداخت ناموفق بوده است';
+        break;
+        case 3:
+            return 'خطا رخ داده است';
+        break;
+        case 4:
+            return 'بلوکه شده';
+        break;
+        case 5:
+            return 'برگشت به پرداخت کننده';
+        break;
+        case 6:
+            return 'برگشت خورده سیستمی';
+        break;
+        case 7:
+            return 'انصراف از پرداخت';
+        break;
+        case 8:
+            return 'به درگاه پرداخت منتقل شد';
+        break;
+        case 100:
+            return 'پرداخت تایید شده است';
+        break;
+        case 101:
+            return 'پرداخت قبلا تایید شده است';
+        break;
+        case 200:
+            return 'به دریافت کننده واریز شد';
+        break;
+        default:
+            return '';
+    }
+}
+
 function idpay_end()
 {
     global $orderid, $CONFIG, $paymentSuccess;
@@ -49,6 +90,7 @@ if(!empty($_POST['order_id'])){
     $orderid = $_POST['order_id'];
     $amount = $_POST['amount'];
     $orderid = checkCbInvoiceID($orderid, $gatewayParams['name']);
+    $status_code = $_POST['status'];
 
     $pid = $_POST['id'];
     $porder_id = $_POST['order_id'];
@@ -128,7 +170,8 @@ if(!empty($_POST['order_id'])){
                 [
                     "GET" => $_GET,
                     "POST" => $_POST,
-                    "result" => idpay_get_failed_message( $gatewayParams['failed_massage'], $_POST['track_id'], $_POST['order_id'] )
+                    "result" => sprintf('خطا هنگام بررسی وضعیت تراکنش. کد خطا: %s - پیام خطا: %s', $status_code, idpay_get_response_message($status_code) ),
+                    "message" => idpay_get_failed_message( $gatewayParams['failed_massage'], $_POST['track_id'], $_POST['order_id'] )
                 ], 'Failure');
         }
     }
