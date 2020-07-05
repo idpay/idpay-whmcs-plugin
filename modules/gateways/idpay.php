@@ -103,7 +103,10 @@ function idpay_link($params)
     curl_close($ch);
 
     if ($http_status != 201 || empty($result) || empty($result->id) || empty($result->link)) {
-        return sprintf('<span style="unicode-bidi: plaintext;">خطا هنگام ایجاد تراکنش. وضعیت خطا: %s - کد خطا: %s - پیام خطا: %s</span>', $http_status, $result->error_code, $result->error_message);
+        $output = sprintf('<p>خطا هنگام ایجاد تراکنش. وضعیت خطا: %s</p>', $http_status);
+        $output .= sprintf('<p style="unicode-bidi: plaintext;">پیام خطا: %s</p>', $result->error_code);
+        $output .= sprintf('<p>کد خطا: %s </p>', $result->error_message);
+        return $output;
     } else {
         $logo_link = $systemurl . 'modules/gateways/idpay/logo.svg';
         $output = '<form method="get" action="' . $result->link . '">

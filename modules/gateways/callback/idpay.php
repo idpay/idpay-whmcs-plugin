@@ -160,7 +160,7 @@ if(!empty($_POST['order_id'])){
                         "GET"    => $_GET,
                         "POST"   => $_POST,
                         "result" => idpay_get_success_message( $gatewayParams['success_massage'], $verify_track_id, $orderid ),
-                        "verify_result" => $result_string,
+                        "verify_result" => print_r($result, true),
                     ], 'Success' );
             }
         }
