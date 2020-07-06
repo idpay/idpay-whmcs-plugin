@@ -20,14 +20,9 @@ $gatewayParams = getGatewayVariables('idpay');
 
 if (!$gatewayParams['type']) die('Module Not Activated');
 
-function idpay_get_failed_message($failed_massage, $track_id, $order_id)
+function idpay_get_filled_message($massage, $track_id, $order_id)
 {
-    return str_replace(["{track_id}", "{order_id}"], [$track_id, $order_id], $failed_massage);
-}
-
-function idpay_get_success_message($success_massage, $track_id, $order_id)
-{
-    return str_replace(["{track_id}", "{order_id}"], [$track_id, $order_id], $success_massage);
+    return str_replace(["{track_id}", "{order_id}"], [$track_id, $order_id], $massage);
 }
 
 function idpay_get_response_message($massage_id)
@@ -73,9 +68,12 @@ function idpay_get_response_message($massage_id)
 
 function idpay_end()
 {
-    global $orderid, $CONFIG, $paymentSuccess;
+    global $orderid, $CONFIG, $paymentSuccess, $track_id;
     if (isset($orderid) && $orderid) {
-        callback3DSecureRedirect($orderid, $paymentSuccess);
+        if($paymentSuccess)
+            callback3DSecureRedirect($orderid, $paymentSuccess);
+        else
+            header('Location: ' . $CONFIG['SystemURL'] . '/viewinvoice.php?id='. $orderid .'&paymentfailed=true&track_id='. $track_id);
         exit();
     } else {
         header('Location: ' . $CONFIG['SystemURL'] . '/clientarea.php?action=invoices');
@@ -84,7 +82,7 @@ function idpay_end()
 }
 
 $paymentSuccess = false;
-
+$track_id = $_POST['track_id'];
 $orderid = 0;
 if(!empty($_POST['order_id'])){
     $orderid = $_POST['order_id'];
@@ -144,7 +142,7 @@ if(!empty($_POST['order_id'])){
                     [
                         "GET"    => $_GET,
                         "POST"   => $_POST,
-                        "result" => idpay_get_failed_message( $gatewayParams['failed_massage'], $verify_track_id, $orderid )
+                        "result" => idpay_get_filled_message( $gatewayParams['failed_massage'], $verify_track_id, $orderid )
                     ], 'Failure' );
             }
             else
@@ -154,13 +152,13 @@ if(!empty($_POST['order_id'])){
                 {
                     $amount = $amount / 10;
                 }
-                addInvoicePayment( $orderid, $verify_track_id, $amount, 0, $gatewaymodule );
+                addInvoicePayment( $orderid, $verify_track_id, $amount, 0, $gatewayParams['paymentmethod'] );
                 logTransaction( $gatewayParams['name'],
                     [
                         "GET"    => $_GET,
                         "POST"   => $_POST,
-                        "result" => idpay_get_success_message( $gatewayParams['success_massage'], $verify_track_id, $orderid ),
-                        "verify_result" => print_r($result, true),
+                        "result" => idpay_get_filled_message( $gatewayParams['success_massage'], $verify_track_id, $orderid ),
+                        "verify_result" => $result_string,
                     ], 'Success' );
             }
         }
@@ -171,7 +169,7 @@ if(!empty($_POST['order_id'])){
                     "GET" => $_GET,
                     "POST" => $_POST,
                     "result" => sprintf('خطا هنگام بررسی وضعیت تراکنش. کد خطا: %s - پیام خطا: %s', $status_code, idpay_get_response_message($status_code) ),
-                    "message" => idpay_get_failed_message( $gatewayParams['failed_massage'], $_POST['track_id'], $_POST['order_id'] )
+                    "message" => idpay_get_filled_message( $gatewayParams['failed_massage'], $_POST['track_id'], $_POST['order_id'] )
                 ], 'Failure');
         }
     }

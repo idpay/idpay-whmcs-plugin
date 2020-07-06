@@ -104,8 +104,8 @@ function idpay_link($params)
 
     if ($http_status != 201 || empty($result) || empty($result->id) || empty($result->link)) {
         $output = sprintf('<p>خطا هنگام ایجاد تراکنش. وضعیت خطا: %s</p>', $http_status);
-        $output .= sprintf('<p style="unicode-bidi: plaintext;">پیام خطا: %s</p>', $result->error_code);
-        $output .= sprintf('<p>کد خطا: %s </p>', $result->error_message);
+        $output .= sprintf('<p style="unicode-bidi: plaintext;">پیام خطا: %s</p>', $result->error_message);
+        $output .= sprintf('<p>کد خطا: %s </p>', $result->error_code);
         return $output;
     } else {
         $logo_link = $systemurl . 'modules/gateways/idpay/logo.svg';
@@ -113,6 +113,28 @@ function idpay_link($params)
             <button type="submit" name="pay" value="پرداخت" style="direction: rtl;"><img src="' . $logo_link . '" width="70px">پرداخت امن با آیدی پی</button>
             <p style="margin-top: 10px;">پرداخت امن به وسیله کلیه کارتهای عضو شتاب با درگاه پرداخت آیدی پی</p>
         </form>';
+
+        if($_GET['paymentfailed'] && $_GET['track_id']){
+            $output .=
+                '<div class="alert alert-danger idpay-message">'. str_replace(["{order_id}", "{track_id}"], [$params['invoiceid'], $_GET['track_id']], $params['failed_massage']) .'</div>
+                <style>
+                .idpay-message {
+                    width: calc(100vw - 187px);
+                    max-width: 710px;
+                    margin: 15px auto 0;
+                }
+                @media (max-width: 767px) {
+                    .idpay-message{
+                        width: calc(100vw - 137px);
+                    }
+                }
+                .panel.panel-danger {
+                    display: none;
+                }
+                </style>';
+
+            $output = '<div style="direction: rtl;">'. $output .'</div>';
+        }
         return $output;
     }
 }
