@@ -2,9 +2,9 @@
 /**
  * IDPay payment gateway
  *
- * @developer JMDMahdi
+ * @developer JMDMahdi, meysamrazmi, vispamir
  * @publisher IDPay
- * @copyright (C) 2018 IDPay
+ * @copyright (C) 2020 IDPay
  * @license http://www.gnu.org/licenses/gpl-2.0.html GPLv2 or later
  *
  * http://idpay.ir
@@ -12,6 +12,9 @@
 
 if (!defined("WHMCS")) die("This file cannot be accessed directly");
 
+/**
+ * @return array
+ */
 function idpay_config()
 {
     return [
@@ -47,6 +50,10 @@ function idpay_config()
     ];
 }
 
+/**
+ * @param $params
+ * @return string
+ */
 function idpay_link($params)
 {
     $systemurl = $params['systemurl'];
