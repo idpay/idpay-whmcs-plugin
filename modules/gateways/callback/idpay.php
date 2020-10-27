@@ -97,7 +97,6 @@ function idpay_end()
 }
 
 $paymentSuccess = false;
-$track_id = $_POST['track_id'];
 $orderid = 0;
 
 if(!empty($_POST['order_id']) || !empty($_GET['order_id'])){
