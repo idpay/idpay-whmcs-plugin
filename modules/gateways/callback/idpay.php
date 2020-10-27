@@ -2,9 +2,9 @@
 /**
  * IDPay payment gateway
  *
- * @developer JMDMahdi
+ * @developer JMDMahdi, meysamrazmi, vispamir
  * @publisher IDPay
- * @copyright (C) 2018 IDPay
+ * @copyright (C) 2020 IDPay
  * @license http://www.gnu.org/licenses/gpl-2.0.html GPLv2 or later
  *
  * http://idpay.ir
@@ -20,11 +20,23 @@ $gatewayParams = getGatewayVariables('idpay');
 
 if (!$gatewayParams['type']) die('Module Not Activated');
 
+/**
+ * @param $failed_massage
+ * @param $track_id
+ * @param $order_id
+ * @return mixed
+ */
 function idpay_get_filled_message($massage, $track_id, $order_id)
 {
     return str_replace(["{track_id}", "{order_id}"], [$track_id, $order_id], $massage);
 }
 
+/**
+ * @param $success_massage
+ * @param $track_id
+ * @param $order_id
+ * @return mixed
+ */
 function idpay_get_response_message($massage_id)
 {
     switch($massage_id){
@@ -66,6 +78,9 @@ function idpay_get_response_message($massage_id)
     }
 }
 
+/**
+ *  End IDPay process
+ */
 function idpay_end()
 {
     global $orderid, $CONFIG, $paymentSuccess, $track_id;
@@ -84,18 +99,30 @@ function idpay_end()
 $paymentSuccess = false;
 $track_id = $_POST['track_id'];
 $orderid = 0;
-if(!empty($_POST['order_id'])){
-    $orderid = $_POST['order_id'];
-    $amount = $_POST['amount'];
+
+if(!empty($_POST['order_id']) || !empty($_GET['order_id'])){
+
+    // Check request method
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $orderid = $_POST['order_id'];
+        $status = $_POST['status'];
+        $pid = $_POST['id'];
+        $porder_id = $_POST['order_id'];
+    }
+    elseif ($_SERVER['REQUEST_METHOD'] === 'GET') {
+        $orderid = $_GET['order_id'];
+        $status = $_GET['status'];
+        $pid = $_GET['id'];
+        $porder_id = $_GET['order_id'];
+    }
+
     $orderid = checkCbInvoiceID($orderid, $gatewayParams['name']);
     $status_code = $_POST['status'];
 
-    $pid = $_POST['id'];
-    $porder_id = $_POST['order_id'];
 
     if (!empty($pid) && !empty($porder_id) && $porder_id == $orderid)
     {
-        if ($_POST['status'] == 10) {
+        if ($status == 10) {
             $api_key = $gatewayParams['api_key'];
             $sandbox = $gatewayParams['sandbox'] == 'on' ? 'true' : 'false';
 
@@ -136,7 +163,7 @@ if(!empty($_POST['order_id'])){
 
             checkCbTransID( $verify_track_id );
 
-            if ( empty( $verify_status ) || empty( $verify_track_id ) || empty( $verify_amount ) || $verify_amount != $amount || $verify_status < 100 )
+            if ( empty( $verify_status ) || empty( $verify_track_id ) || empty( $verify_amount ) || $verify_status < 100 )
             {
                 logTransaction( $gatewayParams['name'],
                     [
@@ -150,7 +177,7 @@ if(!empty($_POST['order_id'])){
                 $paymentSuccess = TRUE;
                 if ( ! empty( $gatewayParams['Currencies'] ) && $gatewayParams['Currencies'] == 'Toman' )
                 {
-                    $amount = $amount / 10;
+                    $amount = $verify_amount / 10;
                 }
                 addInvoicePayment( $orderid, $verify_track_id, $amount, 0, $gatewayParams['paymentmethod'] );
                 logTransaction( $gatewayParams['name'],
@@ -169,7 +196,7 @@ if(!empty($_POST['order_id'])){
                     "GET" => $_GET,
                     "POST" => $_POST,
                     "result" => sprintf('خطا هنگام بررسی وضعیت تراکنش. کد خطا: %s - پیام خطا: %s', $status_code, idpay_get_response_message($status_code) ),
-                    "message" => idpay_get_filled_message( $gatewayParams['failed_massage'], $_POST['track_id'], $_POST['order_id'] )
+                    "message" => idpay_get_filled_message( $gatewayParams['failed_massage'], $track_id, $porder_id )
                 ], 'Failure');
         }
     }
@@ -184,4 +211,5 @@ if(!empty($_POST['order_id'])){
     }
 
 }
+
 idpay_end();
