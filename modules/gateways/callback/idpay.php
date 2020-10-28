@@ -101,23 +101,14 @@ $orderid = 0;
 
 if(!empty($_POST['order_id']) || !empty($_GET['order_id'])){
 
-    // Check request method
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $orderid = $_POST['order_id'];
-        $status = $_POST['status'];
-        $pid = $_POST['id'];
-        $porder_id = $_POST['order_id'];
-    }
-    elseif ($_SERVER['REQUEST_METHOD'] === 'GET') {
-        $orderid = $_GET['order_id'];
-        $status = $_GET['status'];
-        $pid = $_GET['id'];
-        $porder_id = $_GET['order_id'];
-    }
+    $params = ($_SERVER['REQUEST_METHOD'] === 'POST') ? $_POST : $_GET;
 
-    $orderid = checkCbInvoiceID($orderid, $gatewayParams['name']);
-    $status_code = $_POST['status'];
+    $porder_id = $params['order_id'];
+    $status = $params['status'];
+    $pid = $params['id'];
+    $track_id = $params['track_id'];
 
+    $orderid = checkCbInvoiceID($porder_id, $gatewayParams['name']);
 
     if (!empty($pid) && !empty($porder_id) && $porder_id == $orderid)
     {
@@ -194,7 +185,7 @@ if(!empty($_POST['order_id']) || !empty($_GET['order_id'])){
                 [
                     "GET" => $_GET,
                     "POST" => $_POST,
-                    "result" => sprintf('خطا هنگام بررسی وضعیت تراکنش. کد خطا: %s - پیام خطا: %s', $status_code, idpay_get_response_message($status_code) ),
+                    "result" => sprintf('خطا هنگام بررسی وضعیت تراکنش. کد خطا: %s - پیام خطا: %s', $status, idpay_get_response_message($status) ),
                     "message" => idpay_get_filled_message( $gatewayParams['failed_massage'], $track_id, $porder_id )
                 ], 'Failure');
         }
