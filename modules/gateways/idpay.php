@@ -293,21 +293,3 @@ function idpay_get_response_message($massage_id)
             return '';
     }
 }
-
-/* Un USED */
-function post_to_zibal($url, $data = false)
-{
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, "https://gateway.zibal.ir/v1/" . $url);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type:application/json; charset=utf-8'));
-    curl_setopt($ch, CURLOPT_POST, 1);
-    if ($data) {
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-    }
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-    $result = curl_exec($ch);
-    curl_close($ch);
-    return !empty($result) ? json_decode($result) : false;
-}
-
